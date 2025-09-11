@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AuroraHero } from "../components/AuroraHero";
 import ServiceCard from "../components/ServiceCard";
-import WhatsAppButton from "../components/WhatsAppButton";
 import TunisianStates from "../components/TunisianStates";
 import LazyImage from "../components/LazyImage";
 import { Button } from "@/components/ui/button";
@@ -73,9 +72,6 @@ const Index = () => {
   return (
     <main className="flex flex-col min-h-screen">
       <AuroraHero />
-      
-      {/* WhatsApp Floating Button */}
-      <WhatsAppButton />
 
       {/* Stats Section */}
       <section className="py-16 bg-gradient-to-b from-background to-muted/30">

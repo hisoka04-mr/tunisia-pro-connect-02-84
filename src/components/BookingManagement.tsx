@@ -3,12 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BookingRequestCard } from "@/components/BookingRequestCard";
 import { ModernChatInterface } from "@/components/chat/ModernChatInterface";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { 
   Loader2, 
   Calendar, 
@@ -44,8 +48,14 @@ interface BookingData {
 
 export const BookingManagement = () => {
   const [bookings, setBookings] = useState<BookingData[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pending");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<{
     bookingId: string;
     recipientId: string;
@@ -55,6 +65,7 @@ export const BookingManagement = () => {
   const { user } = useAuth();
   const { userProfile, isServiceProvider, isClient } = useUserRole();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user && userProfile) {
@@ -92,6 +103,7 @@ export const BookingManagement = () => {
 
       if (error) throw error;
       setBookings(data || []);
+      setFilteredBookings(data || []);
     } catch (error: any) {
       console.error('Error fetching bookings:', error);
       toast({
@@ -124,15 +136,70 @@ export const BookingManagement = () => {
   };
 
   const getBookingsByStatus = (status: string) => {
-    return bookings.filter(booking => booking.status === status);
+    return filteredBookings.filter(booking => booking.status === status);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    applyFilters(query, dateFilter, statusFilter);
+  };
+
+  const handleDateFilter = (date: string) => {
+    setDateFilter(date);
+    applyFilters(searchQuery, date, statusFilter);
+  };
+
+  const handleStatusFilter = (status: string) => {
+    setStatusFilter(status);
+    applyFilters(searchQuery, dateFilter, status);
+  };
+
+  const applyFilters = (search: string, date: string, status: string) => {
+    let filtered = [...bookings];
+
+    // Apply search filter
+    if (search) {
+      filtered = filtered.filter(booking => 
+        booking.notes?.toLowerCase().includes(search.toLowerCase()) ||
+        booking.client_name?.toLowerCase().includes(search.toLowerCase()) ||
+        booking.id.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Apply date filter
+    if (date) {
+      filtered = filtered.filter(booking => 
+        booking.booking_date === date
+      );
+    }
+
+    // Apply status filter (only if different from current tab)
+    if (status && status !== activeTab) {
+      filtered = filtered.filter(booking => booking.status === status);
+    }
+
+    setFilteredBookings(filtered);
+  };
+
+  const handleNewService = () => {
+    if (isServiceProvider) {
+      navigate("/post-service");
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setDateFilter("");
+    setStatusFilter("");
+    setFilteredBookings(bookings);
   };
 
   const getStatusCounts = () => {
     return {
-      pending: bookings.filter(b => b.status === 'pending').length,
-      confirmed: bookings.filter(b => b.status === 'confirmed').length,
-      declined: bookings.filter(b => b.status === 'declined').length,
-      completed: bookings.filter(b => b.status === 'completed').length,
+      pending: filteredBookings.filter(b => b.status === 'pending').length,
+      confirmed: filteredBookings.filter(b => b.status === 'confirmed').length,
+      declined: filteredBookings.filter(b => b.status === 'declined').length,
+      completed: filteredBookings.filter(b => b.status === 'completed').length,
     };
   };
 
@@ -214,16 +281,90 @@ export const BookingManagement = () => {
           </div>
           
           <div className="flex gap-3">
-            <Button variant="outline" size="lg" className="gap-2 rounded-2xl">
-              <Search className="h-5 w-5" />
-              Search
-            </Button>
-            <Button variant="outline" size="lg" className="gap-2 rounded-2xl">
-              <Filter className="h-5 w-5" />
-              Filter
-            </Button>
+            <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="lg" className="gap-2 rounded-2xl">
+                  <Search className="h-5 w-5" />
+                  Search
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Search Bookings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Search by booking ID, client name, or notes..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full"
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={clearFilters} variant="outline" size="sm">
+                      Clear
+                    </Button>
+                    <Button onClick={() => setIsSearchOpen(false)} size="sm">
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="lg" className="gap-2 rounded-2xl">
+                  <Filter className="h-5 w-5" />
+                  Filter
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Filter Bookings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Date</label>
+                    <Input
+                      type="date"
+                      value={dateFilter}
+                      onChange={(e) => handleDateFilter(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Status</label>
+                    <Select value={statusFilter} onValueChange={handleStatusFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">All statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="declined">Declined</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={clearFilters} variant="outline" size="sm">
+                      Clear Filters
+                    </Button>
+                    <Button onClick={() => setIsFilterOpen(false)} size="sm">
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {isServiceProvider && (
-              <Button size="lg" className="gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg">
+              <Button 
+                onClick={handleNewService}
+                size="lg" 
+                className="gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg"
+              >
                 <Plus className="h-5 w-5" />
                 New Service
               </Button>

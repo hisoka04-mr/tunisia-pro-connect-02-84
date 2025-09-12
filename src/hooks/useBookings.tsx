@@ -59,11 +59,49 @@ export const useBookings = () => {
       setLoading(true);
 
       console.log("🔄 Inserting booking into database...");
+      
+      // Normalize date and time to match Postgres types
+      const normalizeTime = (t: string) => {
+        try {
+          const trimmed = t?.trim();
+          if (!trimmed) return t;
+          // h:mm[:ss] AM/PM
+          const ampm = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)$/i);
+          if (ampm) {
+            let h = parseInt(ampm[1], 10);
+            const m = ampm[2];
+            const s = ampm[3] || '00';
+            const period = ampm[4].toUpperCase();
+            if (period === 'PM' && h < 12) h += 12;
+            if (period === 'AM' && h === 12) h = 0;
+            return `${String(h).padStart(2, '0')}:${m}:${s}`;
+          }
+          // HH:mm or HH:mm:ss
+          const hhmm = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+          if (hhmm) {
+            const h = String(parseInt(hhmm[1], 10)).padStart(2, '0');
+            const m = hhmm[2];
+            const s = hhmm[3] || '00';
+            return `${h}:${m}:${s}`;
+          }
+          return trimmed; // fallback
+        } catch {
+          return t;
+        }
+      };
+
+      const normalizedDate = bookingData.booking_date?.includes('T')
+        ? bookingData.booking_date.split('T')[0]
+        : bookingData.booking_date;
+      const normalizedTime = normalizeTime(bookingData.booking_time);
+
       const bookingInsertData = {
         ...bookingData,
+        booking_date: normalizedDate,
+        booking_time: normalizedTime,
         client_id: user.id,
         status: "pending",
-      };
+      } as const;
       console.log("📝 Final booking insert data:", bookingInsertData);
 
       const { data: booking, error: bookingError } = await supabase

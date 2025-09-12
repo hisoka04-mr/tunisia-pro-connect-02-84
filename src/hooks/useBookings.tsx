@@ -123,16 +123,6 @@ export const useBookings = () => {
 
       console.log('✅ Booking created successfully in database:', booking);
 
-      // Create notification for service provider
-      console.log('📧 Creating booking notification for provider:', booking.service_provider_id);
-      try {
-        await createBookingNotification(booking.service_provider_id, booking.id);
-        console.log('✅ Notification created successfully');
-      } catch (notificationError) {
-        console.error('⚠️ Notification creation failed, but booking was created:', notificationError);
-        // Don't fail the entire booking process if notification fails
-      }
-
       toast({
         title: "✅ Réservation créée avec succès",
         description: "Le prestataire a été notifié de votre demande de réservation",

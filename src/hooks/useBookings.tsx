@@ -226,8 +226,8 @@ export const useBookings = () => {
     }
   };
 
-  // Update booking status (accept only)
-  const updateBookingStatus = async (bookingId: string, status: "confirmed") => {
+  // Update booking status (accept or decline)
+  const updateBookingStatus = async (bookingId: string, status: "confirmed" | "declined") => {
     if (!user) return false;
 
     try {

@@ -52,7 +52,7 @@ export const BookingRequestCard = ({ booking, onStatusUpdate, onOpenChat }: Book
     console.log('BookingRequestCard: Declining booking:', booking.id);
     setIsUpdating(true);
     try {
-      const success = await deleteBooking(booking.id);
+      const success = await updateBookingStatus(booking.id, 'declined');
       
       if (success) {
         console.log('BookingRequestCard: Booking declined successfully');

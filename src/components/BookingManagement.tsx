@@ -183,7 +183,7 @@ export const BookingManagement = () => {
 
   const handleNewService = () => {
     if (isServiceProvider) {
-      navigate("/post-service");
+      navigate("/services");
     }
   };
 

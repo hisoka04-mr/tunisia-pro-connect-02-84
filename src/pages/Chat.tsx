@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ModernChatWindow } from "@/components/chat/ModernChatWindow";
+import { UltraModernChatWindow } from "@/components/chat/UltraModernChatWindow";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { useChat, type Conversation } from "@/hooks/useChat";
 import { MessageCircle, Users, Search } from "lucide-react";
@@ -72,7 +72,7 @@ const Chat = () => {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col">
           {selectedConversation ? (
-            <ModernChatWindow 
+            <UltraModernChatWindow 
               conversation={selectedConversation} 
               onBack={handleBackToList}
             />
@@ -99,7 +99,7 @@ const Chat = () => {
       {/* Mobile Layout */}
       <div className="md:hidden flex-1 flex flex-col">
         {selectedConversation ? (
-          <ModernChatWindow 
+          <UltraModernChatWindow 
             conversation={selectedConversation} 
             onBack={handleBackToList}
           />

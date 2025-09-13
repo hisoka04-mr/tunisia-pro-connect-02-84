@@ -53,7 +53,7 @@ export const BookingManagement = () => {
   const [activeTab, setActiveTab] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<{
@@ -174,7 +174,7 @@ export const BookingManagement = () => {
     }
 
     // Apply status filter (only if different from current tab)
-    if (status && status !== activeTab) {
+    if (status && status !== "all" && status !== activeTab) {
       filtered = filtered.filter(booking => booking.status === status);
     }
 
@@ -190,7 +190,7 @@ export const BookingManagement = () => {
   const clearFilters = () => {
     setSearchQuery("");
     setDateFilter("");
-    setStatusFilter("");
+    setStatusFilter("all");
     setFilteredBookings(bookings);
   };
 
@@ -339,7 +339,7 @@ export const BookingManagement = () => {
                         <SelectValue placeholder="All statuses" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All statuses</SelectItem>
+                        <SelectItem value="all">All statuses</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="confirmed">Confirmed</SelectItem>
                         <SelectItem value="declined">Declined</SelectItem>

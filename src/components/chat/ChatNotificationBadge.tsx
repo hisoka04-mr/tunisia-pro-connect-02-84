@@ -23,7 +23,9 @@ export const ChatNotificationBadge = () => {
           .eq("is_read", false);
 
         if (error) throw error;
-        setUnreadCount(data?.length || 0);
+        const count = data?.length || 0;
+        console.log(`Chat notification badge: ${count} unread messages for user ${user.id}`);
+        setUnreadCount(count);
       } catch (error) {
         console.error("Error counting unread messages:", error);
       }
@@ -32,9 +34,11 @@ export const ChatNotificationBadge = () => {
     // Initial count
     countUnreadMessages();
 
-    // Subscribe to new messages
+    // Subscribe to new messages with enhanced logging
+    console.log('Setting up chat notification subscription for user:', user.id);
+    
     const subscription = supabase
-      .channel("chat-notifications")
+      .channel(`chat-notifications-${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -43,7 +47,8 @@ export const ChatNotificationBadge = () => {
           table: "messages",
           filter: `recipient_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('New message received in notification badge:', payload.new);
           countUnreadMessages();
         }
       )
@@ -55,13 +60,15 @@ export const ChatNotificationBadge = () => {
           table: "messages",
           filter: `recipient_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('Message updated in notification badge:', payload.new);
           countUnreadMessages();
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up chat notification subscription');
       subscription.unsubscribe();
     };
   }, [user]);

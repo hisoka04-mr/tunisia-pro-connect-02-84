@@ -386,9 +386,11 @@ export const useChat = () => {
     }
   };
 
-  // Subscribe to real-time message updates
+  // Subscribe to real-time message updates for current conversation
   useEffect(() => {
     if (!user || !currentConversationId) return;
+
+    console.log('Setting up real-time subscription for conversation:', currentConversationId);
 
     const subscription = supabase
       .channel(`messages-${currentConversationId}`)
@@ -401,61 +403,103 @@ export const useChat = () => {
           filter: `booking_id=eq.${currentConversationId}`,
         },
         async (payload) => {
+          console.log('Real-time message received:', payload.new);
           const newMessage = payload.new as Message;
           
-          // Get sender info
-          const { data: senderData } = await supabase
-            .from("profiles")
-            .select("first_name, last_name, profile_photo_url")
-            .eq("id", newMessage.sender_id)
-            .single();
-
-          const messageWithSender = {
-            ...newMessage,
-            sender: senderData
-          };
-
-          setMessages(prev => {
-            // Don't add if message already exists (prevent duplicates)
-            if (prev.find(msg => msg.id === newMessage.id)) {
-              return prev;
-            }
-            return [...prev, messageWithSender];
-          });
-
-          // Mark as read if not from current user
+          // Only add if not from current user (sender already added it locally)
           if (newMessage.sender_id !== user.id) {
+            // Get sender info
+            const { data: senderData } = await supabase
+              .from("profiles")
+              .select("first_name, last_name, profile_photo_url")
+              .eq("id", newMessage.sender_id)
+              .single();
+
+            const messageWithSender = {
+              ...newMessage,
+              sender: senderData
+            };
+
+            setMessages(prev => {
+              // Don't add if message already exists (prevent duplicates)
+              if (prev.find(msg => msg.id === newMessage.id)) {
+                return prev;
+              }
+              return [...prev, messageWithSender];
+            });
+
+            // Mark as read after a short delay
             setTimeout(() => markMessagesAsRead(currentConversationId), 1000);
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `booking_id=eq.${currentConversationId}`,
+        },
+        (payload) => {
+          console.log('Message updated:', payload.new);
+          const updatedMessage = payload.new as Message;
+          
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === updatedMessage.id ? { ...msg, ...updatedMessage } : msg
+            )
+          );
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up real-time subscription for:', currentConversationId);
       subscription.unsubscribe();
     };
   }, [user, currentConversationId]);
 
-  // Subscribe to message updates to refresh conversations
+  // Subscribe to all message updates to refresh conversations list
   useEffect(() => {
     if (!user) return;
 
+    console.log('Setting up global message subscription for user:', user.id);
+
     const subscription = supabase
-      .channel("messages-updates")
+      .channel("all-messages-updates")
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
+          filter: `recipient_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('New message received for user, refreshing conversations:', payload.new);
+          // Refresh conversations when user receives a new message
+          fetchConversations();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `sender_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('New message sent by user, refreshing conversations:', payload.new);
+          // Refresh conversations when user sends a message
           fetchConversations();
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up global message subscription');
       subscription.unsubscribe();
     };
   }, [user]);

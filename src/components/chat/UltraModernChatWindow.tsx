@@ -30,32 +30,36 @@ export const UltraModernChatWindow = ({ conversation, onBack }: UltraModernChatW
     }
   }, [conversation.booking_id, fetchMessages]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom with better handling
   useEffect(() => {
     const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement | null;
     if (!viewport || messages.length === 0) return;
     
-    const last = messages[messages.length - 1];
-    const shouldAutoScroll = isNearBottom || last?.sender_id === user?.id;
+    const shouldAutoScroll = isNearBottom || messages[messages.length - 1]?.sender_id === user?.id;
     
     if (shouldAutoScroll) {
       setTimeout(() => {
-        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
-      }, 100);
+        viewport.scrollTo({ 
+          top: viewport.scrollHeight, 
+          behavior: messages.length <= 10 ? "auto" : "smooth" 
+        });
+      }, 50);
     }
   }, [messages, user?.id, isNearBottom]);
 
-  // Track scroll position
+  // Track scroll position for auto-scroll behavior
   useEffect(() => {
     const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement | null;
     if (!viewport) return;
     
     const onScroll = () => {
       const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
-      setIsNearBottom(distanceFromBottom < 100);
+      setIsNearBottom(distanceFromBottom < 150);
     };
     
     viewport.addEventListener("scroll", onScroll, { passive: true });
+    onScroll(); // Initial check
+    
     return () => viewport.removeEventListener("scroll", onScroll);
   }, [conversation.booking_id]);
 
@@ -64,15 +68,23 @@ export const UltraModernChatWindow = ({ conversation, onBack }: UltraModernChatW
 
     const messageContent = newMessage.trim();
     setSending(true);
+    setNewMessage(""); // Clear input immediately for better UX
     
     try {
+      console.log('Sending message from UltraModernChatWindow:', { 
+        bookingId: conversation.booking_id, 
+        content: messageContent 
+      });
+      
       const result = await sendMessage(conversation.booking_id, messageContent);
       
-      if (result?.success) {
-        setNewMessage("");
+      if (!result?.success) {
+        console.error('Message sending failed:', result?.error);
+        setNewMessage(messageContent); // Restore message on failure
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      setNewMessage(messageContent); // Restore message on error
     } finally {
       setSending(false);
     }

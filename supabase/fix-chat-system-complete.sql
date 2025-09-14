@@ -1,33 +1,22 @@
--- Complete Chat System Fix
--- This file fixes all chat-related database issues and ensures proper functionality
+-- Complete chat system fix - ensures proper message delivery and real-time updates
+-- This fixes schema inconsistencies and ensures all users have profiles
 
--- =============================================
--- DROP EXISTING CHAT TABLES TO RECREATE PROPERLY
--- =============================================
+-- First, ensure all users have profiles (this was causing "user not found" errors)
+INSERT INTO public.profiles (id, created_at, updated_at)
+SELECT 
+    u.id,
+    COALESCE(u.created_at, now()),
+    COALESCE(u.updated_at, now())
+FROM auth.users u
+WHERE u.id NOT IN (SELECT id FROM public.profiles)
+ON CONFLICT (id) DO NOTHING;
 
--- Drop existing tables in correct order to avoid dependency issues
+-- Drop existing messages table to recreate with proper structure
 DROP TABLE IF EXISTS public.messages CASCADE;
-DROP TABLE IF EXISTS public.conversations CASCADE;
 
--- =============================================
--- CREATE PROPER CHAT TABLES
--- =============================================
-
--- Create conversations table (chat rooms between users for specific bookings)
-CREATE TABLE IF NOT EXISTS public.conversations (
+-- Create messages table with correct schema (booking-based chat, no conversations table needed)
+CREATE TABLE public.messages (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    booking_id UUID NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
-    service_provider_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    client_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    UNIQUE(booking_id) -- One conversation per booking
-);
-
--- Create messages table (individual messages within conversations)
-CREATE TABLE IF NOT EXISTS public.messages (
-    id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     booking_id UUID NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     recipient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -37,144 +26,103 @@ CREATE TABLE IF NOT EXISTS public.messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- =============================================
--- CREATE INDEXES FOR PERFORMANCE
--- =============================================
+-- Create indexes for better performance
+CREATE INDEX idx_messages_booking_id ON public.messages(booking_id);
+CREATE INDEX idx_messages_sender_id ON public.messages(sender_id);
+CREATE INDEX idx_messages_recipient_id ON public.messages(recipient_id);
+CREATE INDEX idx_messages_created_at ON public.messages(created_at);
+CREATE INDEX idx_messages_is_read ON public.messages(is_read);
 
-CREATE INDEX IF NOT EXISTS idx_conversations_booking_id ON public.conversations(booking_id);
-CREATE INDEX IF NOT EXISTS idx_conversations_service_provider_id ON public.conversations(service_provider_id);
-CREATE INDEX IF NOT EXISTS idx_conversations_client_id ON public.conversations(client_id);
-CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON public.messages(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_messages_booking_id ON public.messages(booking_id);
-CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON public.messages(sender_id);
-CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON public.messages(recipient_id);
-CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at);
-
--- =============================================
--- CREATE FUNCTIONS AND TRIGGERS
--- =============================================
-
--- Function to update conversation timestamp when new message is added
-CREATE OR REPLACE FUNCTION update_conversation_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE public.conversations 
-    SET updated_at = now() 
-    WHERE id = NEW.conversation_id;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Trigger to update conversation timestamp
-DROP TRIGGER IF EXISTS update_conversation_timestamp_trigger ON public.messages;
-CREATE TRIGGER update_conversation_timestamp_trigger
-    AFTER INSERT ON public.messages
-    FOR EACH ROW
-    EXECUTE FUNCTION update_conversation_timestamp();
-
--- Function to create conversation when booking is confirmed
-CREATE OR REPLACE FUNCTION create_conversation_on_booking_confirmation()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Only create conversation when booking status changes to confirmed
-    IF NEW.status = 'confirmed' AND (OLD.status IS NULL OR OLD.status != 'confirmed') THEN
-        INSERT INTO public.conversations (booking_id, service_provider_id, client_id)
-        VALUES (NEW.id, NEW.service_provider_id, NEW.client_id)
-        ON CONFLICT (booking_id) DO NOTHING;
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Trigger to create conversation on booking confirmation
-DROP TRIGGER IF EXISTS create_conversation_trigger ON public.bookings;
-CREATE TRIGGER create_conversation_trigger
-    AFTER INSERT OR UPDATE ON public.bookings
-    FOR EACH ROW
-    EXECUTE FUNCTION create_conversation_on_booking_confirmation();
-
--- =============================================
--- ROW LEVEL SECURITY POLICIES
--- =============================================
-
--- Enable RLS
-ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on messages table
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies
-DROP POLICY IF EXISTS "Users can view their own conversations" ON public.conversations;
-DROP POLICY IF EXISTS "Users can create conversations for confirmed bookings" ON public.conversations;
 DROP POLICY IF EXISTS "Users can view messages in their conversations" ON public.messages;
 DROP POLICY IF EXISTS "Users can send messages in their conversations" ON public.messages;
 DROP POLICY IF EXISTS "Users can update their own messages" ON public.messages;
 
--- Conversations policies
-CREATE POLICY "Users can view their own conversations" ON public.conversations
+-- Create RLS policies for messages
+CREATE POLICY "Users can view their messages" ON public.messages
     FOR SELECT USING (
-        auth.uid() = service_provider_id OR 
-        auth.uid() = client_id
+        auth.uid() = sender_id OR auth.uid() = recipient_id
     );
 
-CREATE POLICY "Users can create conversations for confirmed bookings" ON public.conversations
+CREATE POLICY "Users can send messages for their bookings" ON public.messages
     FOR INSERT WITH CHECK (
+        auth.uid() = sender_id AND
         EXISTS (
             SELECT 1 FROM public.bookings 
             WHERE id = booking_id 
-            AND status = 'confirmed'
-            AND (service_provider_id = auth.uid() OR client_id = auth.uid())
+            AND (client_id = auth.uid() OR service_provider_id IN (
+                SELECT id FROM public.service_providers WHERE user_id = auth.uid()
+            ))
         )
     );
 
--- Messages policies
-CREATE POLICY "Users can view messages in their conversations" ON public.messages
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.conversations 
-            WHERE id = conversation_id 
-            AND (service_provider_id = auth.uid() OR client_id = auth.uid())
-        )
-    );
-
-CREATE POLICY "Users can send messages in their conversations" ON public.messages
-    FOR INSERT WITH CHECK (
-        sender_id = auth.uid() AND
-        EXISTS (
-            SELECT 1 FROM public.conversations 
-            WHERE id = conversation_id 
-            AND (service_provider_id = auth.uid() OR client_id = auth.uid())
-        )
-    );
-
-CREATE POLICY "Users can update read status" ON public.messages
+CREATE POLICY "Users can update read status of messages sent to them" ON public.messages
     FOR UPDATE USING (
-        recipient_id = auth.uid() OR sender_id = auth.uid()
-    ) WITH CHECK (
-        recipient_id = auth.uid() OR sender_id = auth.uid()
+        auth.uid() = recipient_id
     );
 
--- =============================================
--- GRANT PERMISSIONS
--- =============================================
+-- Create function to automatically create profiles for new users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, created_at, updated_at)
+  VALUES (NEW.id, NEW.created_at, NEW.updated_at)
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
 
-GRANT ALL ON public.conversations TO authenticated;
+-- Create trigger to automatically create profiles for new users
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Grant necessary permissions
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO service_role;
+
+-- Create function for real-time message notifications
+CREATE OR REPLACE FUNCTION public.notify_new_message()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Perform notification in background (don't block message insert)
+  PERFORM pg_notify(
+    'new_message',
+    json_build_object(
+      'booking_id', NEW.booking_id,
+      'recipient_id', NEW.recipient_id,
+      'sender_id', NEW.sender_id,
+      'message_id', NEW.id
+    )::text
+  );
+  RETURN NEW;
+END;
+$$;
+
+-- Create trigger for real-time notifications
+DROP TRIGGER IF EXISTS on_message_created ON public.messages;
+CREATE TRIGGER on_message_created
+  AFTER INSERT ON public.messages
+  FOR EACH ROW EXECUTE FUNCTION public.notify_new_message();
+
+-- Clean up any existing messages that may have invalid references
+DELETE FROM public.messages 
+WHERE sender_id NOT IN (SELECT id FROM auth.users)
+   OR recipient_id NOT IN (SELECT id FROM auth.users)
+   OR booking_id NOT IN (SELECT id FROM public.bookings);
+
+-- Grant necessary permissions
 GRANT ALL ON public.messages TO authenticated;
-GRANT EXECUTE ON FUNCTION update_conversation_timestamp() TO authenticated;
-GRANT EXECUTE ON FUNCTION create_conversation_on_booking_confirmation() TO authenticated;
-
--- =============================================
--- CREATE SAMPLE CONVERSATIONS FOR EXISTING CONFIRMED BOOKINGS
--- =============================================
-
--- Create conversations for any existing confirmed bookings that don't have conversations yet
-INSERT INTO public.conversations (booking_id, service_provider_id, client_id)
-SELECT 
-    b.id as booking_id,
-    b.service_provider_id,
-    b.client_id
-FROM public.bookings b
-WHERE b.status = 'confirmed'
-AND NOT EXISTS (
-    SELECT 1 FROM public.conversations c WHERE c.booking_id = b.id
-)
-ON CONFLICT (booking_id) DO NOTHING;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.notify_new_message() TO authenticated;

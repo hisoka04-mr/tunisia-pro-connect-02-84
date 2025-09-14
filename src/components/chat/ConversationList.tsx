@@ -56,7 +56,7 @@ export const ConversationList = ({
             key={conversation.booking_id}
             conversation={conversation}
             onClick={() => onSelectConversation(conversation)}
-            isServiceProvider={conversation.service_provider_id === user?.id}
+            isServiceProvider={conversation.user_is_service_provider ?? (conversation.service_provider_id === user?.id)}
             isSelected={conversation.booking_id === selectedConversationId}
           />
         ))}

@@ -9,6 +9,7 @@ export interface Conversation {
   service_provider_id: string;
   client_id: string;
   last_message_date: string;
+  user_is_service_provider?: boolean;
   // Joined data
   booking?: {
     service_details: string;
@@ -124,31 +125,33 @@ export const useChat = () => {
             otherUserId = serviceProviderData.user_id;
           }
 
-          const { data: userData } = await supabase
-            .from("profiles")
-            .select("id, first_name, last_name, profile_photo_url")
-            .eq("id", otherUserId)
-            .single();
+const { data: userData } = await supabase
+  .from("profiles")
+  .select("id, first_name, last_name, profile_photo_url")
+  .eq("id", otherUserId)
+  .maybeSingle();
 
-          // Skip conversations where the other user doesn't exist
-          if (!userData) {
-            console.warn(`Skipping conversation: user ${otherUserId} not found in profiles`);
-            return null;
-          }
+const otherUser = userData || {
+  id: otherUserId,
+  first_name: "User",
+  last_name: "",
+  profile_photo_url: null,
+};
 
-          return {
-            booking_id: bookingId,
-            service_provider_id: bookingData.service_provider_id,
-            client_id: bookingData.client_id,
-            last_message_date: lastMessageDate,
-            booking: {
-              service_details: serviceTitle,
-              scheduled_date: bookingData.booking_date,
-              scheduled_time: bookingData.booking_time,
-              status: bookingData.status
-            },
-            other_user: userData
-          };
+return {
+  booking_id: bookingId,
+  service_provider_id: bookingData.service_provider_id,
+  client_id: bookingData.client_id,
+  last_message_date: lastMessageDate,
+  user_is_service_provider: isCurrentUserServiceProvider,
+  booking: {
+    service_details: serviceTitle,
+    scheduled_date: bookingData.booking_date,
+    scheduled_time: bookingData.booking_time,
+    status: bookingData.status
+  },
+  other_user: otherUser
+};
         })
       );
 

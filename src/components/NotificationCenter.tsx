@@ -117,9 +117,9 @@ export const NotificationCenter = () => {
     markAsRead(notification.id);
     
     // Navigate based on notification type
-    if (notification.type === 'booking_request' && notification.related_id) {
-      window.location.href = `/bookings/${notification.related_id}`;
-    } else if (notification.type === 'booking_accepted' && notification.related_id) {
+    if (notification.type === 'booking_request' || notification.type === 'booking_accepted' || notification.type === 'booking_rejected') {
+      window.location.href = `/bookings`;
+    } else if (notification.type === 'message' && notification.related_id) {
       window.location.href = `/chat?booking=${notification.related_id}`;
     }
   };

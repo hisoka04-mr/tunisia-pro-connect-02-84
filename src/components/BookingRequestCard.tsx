@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useBookings } from "@/hooks/useBookings";
+import { useUserRole } from "@/hooks/useUserRole";
 import { CheckCircle, XCircle, Clock, User, Calendar, MapPin, MessageCircle } from "lucide-react";
 
 interface BookingRequestCardProps {
@@ -25,6 +26,7 @@ export const BookingRequestCard = ({ booking, onStatusUpdate, onOpenChat }: Book
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
   const { updateBookingStatus, deleteBooking } = useBookings();
+  const { isServiceProvider, isClient } = useUserRole();
 
   const handleAccept = async () => {
     console.log('BookingRequestCard: Accepting booking:', booking.id);
@@ -146,8 +148,8 @@ export const BookingRequestCard = ({ booking, onStatusUpdate, onOpenChat }: Book
           </div>
         )}
 
-        {/* Action Buttons */}
-        {booking.status === 'pending' && (
+        {/* Action Buttons - Only for Service Providers */}
+        {booking.status === 'pending' && isServiceProvider && (
           <div className="flex gap-3 pt-4">
             <Button
               onClick={handleAccept}
@@ -166,6 +168,39 @@ export const BookingRequestCard = ({ booking, onStatusUpdate, onOpenChat }: Book
               <XCircle className="h-4 w-4 mr-2" />
               Decline
             </Button>
+          </div>
+        )}
+
+        {/* Status Info for Clients */}
+        {booking.status === 'pending' && isClient && (
+          <div className="pt-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-yellow-600" />
+                <p className="text-sm text-yellow-800 font-medium">
+                  Waiting for provider response
+                </p>
+              </div>
+              <p className="text-xs text-yellow-700 mt-1">
+                Your booking request has been sent. The service provider will respond soon.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {booking.status === 'declined' && isClient && (
+          <div className="pt-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-red-600" />
+                <p className="text-sm text-red-800 font-medium">
+                  Booking declined
+                </p>
+              </div>
+              <p className="text-xs text-red-700 mt-1">
+                This booking request was declined by the service provider.
+              </p>
+            </div>
           </div>
         )}
 

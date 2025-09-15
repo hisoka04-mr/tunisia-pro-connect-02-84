@@ -226,8 +226,8 @@ export const useBookings = () => {
     }
   };
 
-  // Update booking status (accept or decline)
-  const updateBookingStatus = async (bookingId: string, status: "confirmed" | "declined") => {
+  // Update booking status (accept, decline, or complete)
+  const updateBookingStatus = async (bookingId: string, status: "confirmed" | "declined" | "completed") => {
     if (!user) return false;
 
     try {
@@ -288,24 +288,38 @@ export const useBookings = () => {
       const bookingTime = booking.booking_time;
 
       // Create confirmation notification for client
-      const notificationTitle = `🎉 Booking Confirmed!`;
-      const notificationMessage = `Great news! ${providerName} has confirmed your booking on ${bookingDate} at ${bookingTime}. A chat room has been created so you can communicate directly with your service provider.`;
+      let notificationTitle, notificationMessage, notificationType;
+      
+      if (status === "confirmed") {
+        notificationTitle = `🎉 Booking Confirmed!`;
+        notificationMessage = `Great news! ${providerName} has confirmed your booking on ${bookingDate} at ${bookingTime}. A chat room has been created so you can communicate directly with your service provider.`;
+        notificationType = "booking_update";
+      } else if (status === "completed") {
+        notificationTitle = `✅ Service Completed!`;
+        notificationMessage = `${providerName} has marked your booking on ${bookingDate} as completed. Thank you for using our service!`;
+        notificationType = "booking_update";
+      }
+      
+      // Only create notifications for confirmed and completed bookings
+      if (status !== "declined") {
+        // Create in-app notification for the client
+        await supabase.from("notifications").insert({
+          user_id: booking.client_id,
+          title: notificationTitle,
+          message: notificationMessage,
+          type: notificationType,
+          related_id: bookingId,
+          is_read: false,
+        });
 
-      // Create in-app notification for the client
-      await supabase.from("notifications").insert({
-        user_id: booking.client_id,
-        title: notificationTitle,
-        message: notificationMessage,
-        type: "booking_update",
-        related_id: bookingId,
-        is_read: false,
-      });
-
-      console.log(`Confirmation notification sent to client ${booking.client_id} for booking ${bookingId}`);
+        console.log(`${status} notification sent to client ${booking.client_id} for booking ${bookingId}`);
+      }
 
       toast({
-        title: `Booking confirmed`,
-        description: `The booking has been confirmed successfully and the client has been notified`,
+        title: status === "confirmed" ? `Booking confirmed` : `Booking completed`,
+        description: status === "confirmed" 
+          ? `The booking has been confirmed successfully and the client has been notified`
+          : `The booking has been marked as completed successfully`,
       });
 
       // Refresh bookings

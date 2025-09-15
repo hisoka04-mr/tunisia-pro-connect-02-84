@@ -72,6 +72,32 @@ export const BookingRequestCard = ({ booking, onStatusUpdate, onOpenChat }: Book
     }
   };
 
+  const handleComplete = async () => {
+    console.log('BookingRequestCard: Completing booking:', booking.id);
+    setIsUpdating(true);
+    try {
+      const success = await updateBookingStatus(booking.id, 'completed');
+      
+      if (success) {
+        console.log('BookingRequestCard: Booking completed successfully');
+        onStatusUpdate?.();
+        toast({
+          title: "Booking completed!",
+          description: "The booking has been marked as completed.",
+        });
+      }
+    } catch (error: any) {
+      console.error('BookingRequestCard: Failed to complete booking:', error);
+      toast({
+        title: "Error completing booking",
+        description: error.message || "Please try again later",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -206,7 +232,7 @@ export const BookingRequestCard = ({ booking, onStatusUpdate, onOpenChat }: Book
 
         {/* Chat Access for Confirmed Bookings */}
         {booking.status === 'confirmed' && onOpenChat && (
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
             <Button
               onClick={() => onOpenChat(booking)}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
@@ -215,6 +241,36 @@ export const BookingRequestCard = ({ booking, onStatusUpdate, onOpenChat }: Book
               <MessageCircle className="h-4 w-4 mr-2" />
               Ouvrir le Chat
             </Button>
+            
+            {/* Mark as Completed button for service providers */}
+            {isServiceProvider && (
+              <Button
+                onClick={handleComplete}
+                disabled={isUpdating}
+                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg"
+                variant="default"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Mark as Completed
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Completed Status Info */}
+        {booking.status === 'completed' && (
+          <div className="pt-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <p className="text-sm text-green-800 font-medium">
+                  Service completed
+                </p>
+              </div>
+              <p className="text-xs text-green-700 mt-1">
+                This booking has been completed successfully.
+              </p>
+            </div>
           </div>
         )}
       </CardContent>

@@ -308,6 +308,12 @@ const BrowseServices = ({
   const { permissions } = usePermissions();
   const [activeTab, setActiveTab] = useState<'onsite' | 'online'>('onsite');
 
+  // Filter categories based on active tab
+  const filteredCategories = useMemo(() => 
+    jobCategories.filter(cat => (cat as any).service_type === activeTab),
+    [jobCategories, activeTab]
+  );
+
   return (
     <div className="flex flex-col lg:flex-row gap-10">
       {/* Modern Filters Sidebar */}
@@ -354,7 +360,7 @@ const BrowseServices = ({
                 </SelectTrigger>
                 <SelectContent className="bg-background border-border/50 rounded-xl shadow-xl">
                   <SelectItem value="all" className="rounded-lg">All Categories</SelectItem>
-                  {jobCategories.map((cat) => (
+                  {filteredCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id} className="rounded-lg">
                       {cat.name}
                     </SelectItem>

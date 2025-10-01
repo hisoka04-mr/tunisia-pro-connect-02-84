@@ -28,14 +28,6 @@ export function AuroraHero() {
             Get instant access to verified plumbers, electricians, and carpenters
             across Tunisia. Quality service guaranteed.
           </p>
-          <SearchBar />
-          <div className="mt-8 flex flex-wrap gap-4 justify-center">
-            <Link to="/services">
-              <Button size="lg" className="text-lg px-8">
-                Explore Services
-              </Button>
-            </Link>
-          </div>
         </div>
         
         <motion.div 

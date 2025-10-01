@@ -9,22 +9,27 @@ import ServicePhotoUpload from "@/components/ServicePhotoUpload";
 import LazyImage from "@/components/LazyImage";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import BookingCalendar from "@/components/BookingCalendar";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceDetailsProps {
   service: any;
   onBack: () => void;
-  onBookService: () => void;
+  onBookService?: () => void;
   isOwner?: boolean;
 }
 
 export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false }: ServiceDetailsProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { getServicePhotos } = useServicePhotos();
   const [servicePhotos, setServicePhotos] = useState<any[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
 
   useEffect(() => {
     if (service?.id) {
@@ -104,6 +109,27 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBookingComplete = (booking: { date: Date; time: string; providerId: string }) => {
+    setShowBookingDialog(false);
+    navigate('/booking-form', {
+      state: {
+        providerId: booking.providerId,
+        serviceId: service.id,
+        selectedDate: booking.date,
+        selectedTime: booking.time,
+        businessName: service.business_name,
+      },
+    });
+  };
+
+  const handleBookService = () => {
+    if (onBookService) {
+      onBookService();
+    } else {
+      setShowBookingDialog(true);
     }
   };
 
@@ -262,7 +288,7 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
         <Card>
           <CardContent className="pt-6">
             <Button 
-              onClick={onBookService}
+              onClick={handleBookService}
               className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
             >
               Book This Service
@@ -270,6 +296,21 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
           </CardContent>
         </Card>
       )}
+
+      {/* Booking Dialog */}
+      <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Date & Time</DialogTitle>
+          </DialogHeader>
+          <BookingCalendar
+            providerId={service.service_provider_id}
+            providerName={service.business_name}
+            providerLocation={service.location}
+            onBookingComplete={handleBookingComplete}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

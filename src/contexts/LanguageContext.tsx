@@ -82,7 +82,7 @@ const translations = {
     jobsCompleted: 'مهمة مكتملة',
     
     readyToStart: 'مستعد للبدء؟',
-    readyToStartSubtitle: 'انضم إلى آلاف العملاء الراضين في جميع أنحاء تونس الذين يثقون في ServiGo لاحتياجات خدمات منازلهم',
+    readyToStartSubtitle: 'انضم إلى آلاف العملاء الراضين في جميع أنحاء تونس الذين يثقون في ServiGOTN لاحتياجات خدمات منازلهم',
     bookNow: 'احجز الآن',
     joinAsProfessional: 'انضم كمحترف',
     tunisianOwned: 'مملوك ومدار تونسياً',
@@ -163,7 +163,7 @@ const translations = {
     jobsCompleted: 'travaux terminés',
     
     readyToStart: 'Prêt à commencer ?',
-    readyToStartSubtitle: 'Rejoignez des milliers de clients satisfaits à travers la Tunisie qui font confiance à ServiGo pour leurs besoins de services à domicile',
+    readyToStartSubtitle: 'Rejoignez des milliers de clients satisfaits à travers la Tunisie qui font confiance à ServiGOTN pour leurs besoins de services à domicile',
     bookNow: 'Réserver maintenant',
     joinAsProfessional: 'Rejoindre en tant que professionnel',
     tunisianOwned: 'Propriété et exploitation tunisiennes',
@@ -244,7 +244,7 @@ const translations = {
     jobsCompleted: 'jobs completed',
     
     readyToStart: 'Ready to get started?',
-    readyToStartSubtitle: 'Join thousands of satisfied customers across Tunisia who trust ServiGo for their home service needs',
+    readyToStartSubtitle: 'Join thousands of satisfied customers across Tunisia who trust ServiGOTN for their home service needs',
     bookNow: 'Book Now',
     joinAsProfessional: 'Join as a Professional',
     tunisianOwned: 'Tunisian Owned & Operated',

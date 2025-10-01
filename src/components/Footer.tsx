@@ -17,7 +17,7 @@ const Footer = () => {
                 <span className="text-white font-bold text-lg">S</span>
               </div>
               <h3 className="font-bold text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                SeviGOTN
+                ServiGOTN
               </h3>
             </div>
             <p className="text-white/80 text-lg leading-relaxed mb-6 max-w-md">
@@ -53,7 +53,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-3 text-white/70">
                 <Mail className="w-5 h-5 text-white" />
-                <span>contact@sevigotn.com</span>
+                <span>contact@ServiGOTN.com</span>
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-6">
             <p className="text-white/70">
-              &copy; {new Date().getFullYear()} SeviGOTN. All rights reserved.
+              &copy; {new Date().getFullYear()} ServiGOTN. All rights reserved.
             </p>
             <div className="hidden md:flex items-center gap-4 text-sm text-white/70">
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>

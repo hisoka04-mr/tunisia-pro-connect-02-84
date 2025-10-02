@@ -116,8 +116,8 @@ const ServiceDetail = () => {
       // If owner, take them to their bookings/management page
       navigate('/bookings');
     } else {
-      // Show booking calendar
-      setShowBookingCalendar(true);
+      // Toggle inline booking calendar
+      setShowBookingCalendar((prev) => !prev);
     }
   };
 
@@ -350,7 +350,7 @@ const ServiceDetail = () => {
                       className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                     >
                       <Calendar className="h-5 w-5 mr-2" />
-                      Book Now
+                      Calendrier
                     </Button>
                     <ChatProviderButton 
                       providerId={service.service_provider_id || service.user_id || ''}
@@ -371,6 +371,21 @@ const ServiceDetail = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Inline Booking Calendar (shown when Calendrier is clicked) */}
+            {showBookingCalendar && (
+              <Card className="shadow-lg">
+                <CardContent className="p-6">
+                  <BookingCalendar 
+                    providerId={service.service_provider_id || service.user_id || ''}
+                    providerName={service.provider_name || service.business_name || 'Service Provider'}
+                    providerPhoto={service.provider_photo}
+                    providerLocation={service.location}
+                    onBookingComplete={handleBookingComplete}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Quick Info Card */}
             <Card className="shadow-lg">
@@ -402,33 +417,6 @@ const ServiceDetail = () => {
             </Card>
           </div>
         </div>
-
-        {/* Booking Calendar Modal */}
-        {showBookingCalendar && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-background rounded-lg shadow-xl max-w-md w-full">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold">Select Date & Time</h3>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowBookingCalendar(false)}
-                  >
-                    ✕
-                  </Button>
-                </div>
-                <BookingCalendar 
-                  providerId={service.service_provider_id || service.user_id || ''}
-                  providerName={service.provider_name || service.business_name || 'Service Provider'}
-                  providerPhoto={service.provider_photo}
-                  providerLocation={service.location}
-                  onBookingComplete={handleBookingComplete}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -9,7 +9,6 @@ import ServicePhotoUpload from "@/components/ServicePhotoUpload";
 import LazyImage from "@/components/LazyImage";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import BookingCalendar from "@/components/BookingCalendar";
 import { useNavigate } from "react-router-dom";
 
 interface ServiceDetailsProps {
@@ -272,15 +271,7 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
         </CardContent>
       </Card>
 
-      {/* Booking Calendar */}
-      {!isOwner && (
-        <BookingCalendar
-          providerId={service.service_provider_id}
-          providerName={service.business_name}
-          providerLocation={service.location}
-          onBookingComplete={handleBookingComplete}
-        />
-      )}
+      {/* Booking section handled by page-level component */}
     </div>
   );
 };

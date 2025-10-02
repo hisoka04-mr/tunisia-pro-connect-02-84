@@ -300,9 +300,6 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
       {/* Booking Dialog */}
       <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Select Date & Time</DialogTitle>
-          </DialogHeader>
           <BookingCalendar
             providerId={service.service_provider_id}
             providerName={service.business_name}

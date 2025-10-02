@@ -9,7 +9,6 @@ import ServicePhotoUpload from "@/components/ServicePhotoUpload";
 import LazyImage from "@/components/LazyImage";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import BookingCalendar from "@/components/BookingCalendar";
 import { useNavigate } from "react-router-dom";
 
@@ -29,7 +28,6 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showBookingDialog, setShowBookingDialog] = useState(false);
 
   useEffect(() => {
     if (service?.id) {
@@ -113,7 +111,6 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
   };
 
   const handleBookingComplete = (booking: { date: Date; time: string; providerId: string }) => {
-    setShowBookingDialog(false);
     navigate('/booking-form', {
       state: {
         providerId: booking.providerId,
@@ -123,14 +120,6 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
         businessName: service.business_name,
       },
     });
-  };
-
-  const handleBookService = () => {
-    if (onBookService) {
-      onBookService();
-    } else {
-      setShowBookingDialog(true);
-    }
   };
 
   return (
@@ -283,31 +272,15 @@ export const ServiceDetails = ({ service, onBack, onBookService, isOwner = false
         </CardContent>
       </Card>
 
-      {/* Action Button */}
+      {/* Booking Calendar */}
       {!isOwner && (
-        <Card>
-          <CardContent className="pt-6">
-            <Button 
-              onClick={handleBookService}
-              className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-            >
-              Book This Service
-            </Button>
-          </CardContent>
-        </Card>
+        <BookingCalendar
+          providerId={service.service_provider_id}
+          providerName={service.business_name}
+          providerLocation={service.location}
+          onBookingComplete={handleBookingComplete}
+        />
       )}
-
-      {/* Booking Dialog */}
-      <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
-        <DialogContent className="max-w-md">
-          <BookingCalendar
-            providerId={service.service_provider_id}
-            providerName={service.business_name}
-            providerLocation={service.location}
-            onBookingComplete={handleBookingComplete}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

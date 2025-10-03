@@ -321,7 +321,7 @@ const Index = () => {
               Rejoignez des milliers d'utilisateurs satisfaits et trouvez le professionnel parfait pour tous vos besoins
             </p>
             <div className="flex flex-wrap justify-center gap-6 mb-12">
-              <Link to="/booking">
+              <Link to="/services">
                 <Button size="lg" variant="secondary" className="text-lg px-10 py-4 bg-white text-primary hover:bg-white/90 shadow-lg">
                   {t('bookNow')}
                 </Button>

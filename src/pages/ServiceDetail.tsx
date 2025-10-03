@@ -114,14 +114,10 @@ const ServiceDetail = () => {
       // If owner, take them to their bookings/management page
       navigate('/bookings');
     } else {
-      // Navigate directly to booking form
-      navigate('/booking-form', {
-        state: {
-          providerId: service?.service_provider_id || service?.user_id,
-          providerName: service?.provider_name || service?.business_name,
-          serviceId: service?.id
-        }
-      });
+      // Stay on or go to the service detail page
+      if (service?.id) {
+        navigate(`/service/${service.id}`);
+      }
     }
   };
 

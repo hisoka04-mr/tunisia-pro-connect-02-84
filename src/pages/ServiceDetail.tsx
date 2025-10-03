@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import BookingCalendar from "@/components/BookingCalendar";
 import { ArrowLeft, MapPin, DollarSign, Clock, ArrowRight, Star, Calendar, MessageCircle, Shield, Award } from "lucide-react";
 
 const ServiceDetail = () => {
@@ -19,7 +18,6 @@ const ServiceDetail = () => {
   const [service, setService] = useState<ServiceWithProvider | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
-  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
 
   useEffect(() => {
     const fetchServiceDetails = async () => {
@@ -116,22 +114,15 @@ const ServiceDetail = () => {
       // If owner, take them to their bookings/management page
       navigate('/bookings');
     } else {
-      // Toggle booking calendar
-      setShowBookingCalendar((prev) => !prev);
+      // Navigate directly to booking form
+      navigate('/booking-form', {
+        state: {
+          providerId: service?.service_provider_id || service?.user_id,
+          providerName: service?.provider_name || service?.business_name,
+          serviceId: service?.id
+        }
+      });
     }
-  };
-
-  const handleBookingComplete = (booking: { date: Date; time: string; providerId: string }) => {
-    setShowBookingCalendar(false);
-    navigate('/booking-form', {
-      state: {
-        providerId: booking.providerId,
-        providerName: service?.provider_name || service?.business_name,
-        date: booking.date,
-        time: booking.time,
-        serviceId: service?.id
-      }
-    });
   };
 
   if (loading) {
@@ -371,21 +362,6 @@ const ServiceDetail = () => {
                 )}
               </CardContent>
             </Card>
-
-            {/* Inline Booking Calendar (shown when Calendrier is clicked) */}
-            {showBookingCalendar && (
-              <Card className="shadow-lg">
-                <CardContent className="p-6">
-                  <BookingCalendar 
-                    providerId={service.service_provider_id || service.user_id || ''}
-                    providerName={service.provider_name || service.business_name || 'Service Provider'}
-                    providerPhoto={service.provider_photo}
-                    providerLocation={service.location}
-                    onBookingComplete={handleBookingComplete}
-                  />
-                </CardContent>
-              </Card>
-            )}
 
             {/* Quick Info Card */}
             <Card className="shadow-lg">

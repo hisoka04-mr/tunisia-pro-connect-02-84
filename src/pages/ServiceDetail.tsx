@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ServiceDetails } from "@/components/ServiceDetails";
 import { ChatProviderButton } from "@/components/chat/ChatProviderButton";
@@ -11,8 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BookingCalendar from "@/components/BookingCalendar";
 import { ArrowLeft, MapPin, DollarSign, Clock, ArrowRight, Star, Calendar, MessageCircle, Shield, Award } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 
 const ServiceDetail = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -22,8 +20,6 @@ const ServiceDetail = () => {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
-  const [bookingType, setBookingType] = useState<'normal' | 'scheduled'>('normal');
-  const optionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchServiceDetails = async () => {
@@ -111,10 +107,6 @@ const ServiceDetail = () => {
     fetchServiceDetails();
   }, [serviceId, user]);
 
-  useEffect(() => {
-    setShowBookingCalendar(bookingType === 'scheduled');
-  }, [bookingType]);
-
   const handleBack = () => {
     navigate('/services');
   };
@@ -124,8 +116,8 @@ const ServiceDetail = () => {
       // If owner, take them to their bookings/management page
       navigate('/bookings');
     } else {
-      // Scroll to booking options; calendar will appear only when "Planifié" is selected
-      optionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Toggle booking calendar
+      setShowBookingCalendar((prev) => !prev);
     }
   };
 
@@ -347,31 +339,11 @@ const ServiceDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Booking Options and Actions */}
+            {/* Action Card */}
             <Card className="shadow-lg">
-              <CardContent className="p-6 space-y-5">
+              <CardContent className="p-6 space-y-4">
                 {!isOwner ? (
                   <>
-                    {/* Booking Type Selector */}
-                    <div ref={optionsRef} className="space-y-3">
-                      <p className="text-sm font-medium">Type de demande</p>
-                      <RadioGroup value={bookingType} onValueChange={(v) => setBookingType(v as 'normal' | 'scheduled')}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="normal" id="type-normal" />
-                          <Label htmlFor="type-normal" className="text-sm cursor-pointer">
-                            Normal - Dans les prochains jours
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="scheduled" id="type-scheduled" />
-                          <Label htmlFor="type-scheduled" className="text-sm cursor-pointer">
-                            Planifié - À la date choisie
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
-                    {/* Primary Action */}
                     <Button 
                       onClick={handleBookService}
                       size="lg"
@@ -380,8 +352,6 @@ const ServiceDetail = () => {
                       <Calendar className="h-5 w-5 mr-2" />
                       Book Now
                     </Button>
-
-                    {/* Chat */}
                     <ChatProviderButton 
                       providerId={service.service_provider_id || service.user_id || ''}
                       providerName={service.provider_name || service.business_name || 'Service Provider'}

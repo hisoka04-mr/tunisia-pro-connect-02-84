@@ -55,7 +55,7 @@ export const emailTemplates = {
               <a href="${data.dashboardUrl}" class="button">View Booking Request</a>
             </div>
             
-            <p>Best regards,<br>The Sevigo Team</p>
+            <p>Best regards,<br>The ServiGOTN Team</p>
           </div>
         </div>
       </body>
@@ -105,7 +105,7 @@ export const emailTemplates = {
             
             <p>Your service provider will contact you if any additional details are needed.</p>
             
-            <p>Best regards,<br>The Sevigo Team</p>
+            <p>Best regards,<br>The ServiGOTN Team</p>
           </div>
         </div>
       </body>
@@ -168,7 +168,7 @@ export const emailTemplates = {
               <a href="${window.location.origin}/service-listings" class="button">Find Other Providers</a>
             </div>
             
-            <p>Best regards,<br>The Sevigo Team</p>
+            <p>Best regards,<br>The ServiGOTN Team</p>
           </div>
         </div>
       </body>

@@ -1,9 +1,9 @@
 // Configuration for admin user emails
 // Add your admin emails here
 export const ADMIN_EMAILS = [
-  'admin@sevigo.com',
+  'admin@servigo.com',
   'admin@admin.com',
-  'support@sevigo.com'
+  'support@servigo.com'
 ];
 
 export const isAdminEmail = (email: string): boolean => {

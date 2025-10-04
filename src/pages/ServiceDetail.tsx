@@ -114,11 +114,11 @@ const ServiceDetail = () => {
       // If owner, take them to their bookings/management page
       navigate('/bookings');
     } else {
-      // Navigate to booking form with provider ID
-      if (service?.service_provider_id) {
-        navigate(`/booking/${service.service_provider_id}`);
+      // Open the existing service detail page (valid route)
+      if (service?.id) {
+        navigate(`/service/${service.id}`);
       } else {
-        console.error('No service provider ID found');
+        console.error('No service ID found');
       }
     }
   };

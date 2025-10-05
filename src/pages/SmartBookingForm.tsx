@@ -3,7 +3,6 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { getServiceType } from "@/utils/serviceCategories";
 import OnSiteBookingForm from "@/components/OnSiteBookingForm";
 import OnlineBookingForm from "@/components/OnlineBookingForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,21 +44,14 @@ const SmartBookingForm = () => {
       }
 
       try {
-        // Fetch service provider with category information
-        const { data: provider, error } = await supabase
+        // Fetch service provider
+        const { data: provider, error: providerError } = await supabase
           .from("service_providers")
-          .select(`
-            id,
-            user_id,
-            job_category_id,
-            job_categories (
-              name
-            )
-          `)
+          .select("id, user_id, business_name")
           .eq("id", providerId)
           .single();
 
-        if (error || !provider) {
+        if (providerError || !provider) {
           toast({
             title: "Provider Not Found",
             description: "The selected provider could not be found",
@@ -69,28 +61,46 @@ const SmartBookingForm = () => {
           return;
         }
 
-        // Get profile information separately
-        let providerName = "Service Provider";
+        // Fetch the provider's services to get the service_type
+        const { data: services, error: servicesError } = await supabase
+          .from("services")
+          .select("service_type, job_categories(name)")
+          .eq("service_provider_id", providerId)
+          .limit(1)
+          .single();
+
+        if (servicesError || !services) {
+          toast({
+            title: "Service Not Found",
+            description: "No services found for this provider",
+            variant: "destructive",
+          });
+          navigate("/services");
+          return;
+        }
+
+        // Get profile information
+        let providerName = provider.business_name || "Service Provider";
         if (provider.user_id) {
           try {
             const { data: profile } = await supabase
               .from("profiles")
               .select("first_name, last_name")
               .eq("id", provider.user_id)
-              .single();
+              .maybeSingle();
             
-            if (profile) {
-              providerName = `${profile.first_name} ${profile.last_name}`;
+            if (profile && profile.first_name) {
+              providerName = `${profile.first_name} ${profile.last_name || ''}`.trim();
             }
           } catch (profileError) {
             console.warn("Could not fetch profile:", profileError);
           }
         }
 
-        const categoryName = (provider as any).job_categories?.name || '';
-        const detectedServiceType = getServiceType(categoryName);
+        const categoryName = (services as any).job_categories?.name || '';
+        const detectedServiceType = services.service_type as 'onsite' | 'online';
 
-        if (detectedServiceType === 'unknown') {
+        if (!detectedServiceType || (detectedServiceType !== 'onsite' && detectedServiceType !== 'online')) {
           toast({
             title: "Service Type Unknown",
             description: "Unable to determine if this is an on-site or online service",

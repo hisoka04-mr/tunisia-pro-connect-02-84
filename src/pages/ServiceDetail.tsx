@@ -114,11 +114,12 @@ const ServiceDetail = () => {
       // If owner, take them to their bookings/management page
       navigate('/bookings');
     } else {
-      // Open the existing service detail page (valid route)
-      if (service?.id) {
-        navigate(`/service/${service.id}`);
+      // Navigate to booking form with provider ID
+      // SmartBookingForm will automatically handle onsite vs online service types
+      if (service?.service_provider_id) {
+        navigate(`/booking/${service.service_provider_id}`);
       } else {
-        console.error('No service ID found');
+        console.error('No service provider ID found');
       }
     }
   };

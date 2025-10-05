@@ -33,7 +33,6 @@ const OnlineBookingForm = ({ providerId, providerName }: OnlineBookingFormProps)
   const [projectDetails, setProjectDetails] = useState("");
   const [budget, setBudget] = useState("");
   const [timeline, setTimeline] = useState("");
-  const [projectType, setProjectType] = useState("");
   const [requirements, setRequirements] = useState("");
   const [agree, setAgree] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,7 +64,6 @@ const OnlineBookingForm = ({ providerId, providerName }: OnlineBookingFormProps)
         projectDetails,
         budget,
         timeline,
-        projectType,
         requirements,
         clientId: user.id,
         status: 'pending'
@@ -112,26 +110,6 @@ const OnlineBookingForm = ({ providerId, providerName }: OnlineBookingFormProps)
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Project Type */}
-            <div className="space-y-2">
-              <Label htmlFor="project-type">Service Type</Label>
-              <Select value={projectType} onValueChange={setProjectType} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select service type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="web-development">Web Development</SelectItem>
-                  <SelectItem value="graphic-design">Graphic Design</SelectItem>
-                  <SelectItem value="digital-marketing">Digital Marketing</SelectItem>
-                  <SelectItem value="writing">Content Writing</SelectItem>
-                  <SelectItem value="tutoring">Online Tutoring</SelectItem>
-                  <SelectItem value="translation">Translation</SelectItem>
-                  <SelectItem value="consulting">Consulting</SelectItem>
-                  <SelectItem value="other">Other Online Service</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Project Title */}
             <div className="space-y-2">
               <Label htmlFor="project-title">Project Title</Label>

@@ -38,7 +38,6 @@ const OnSiteBookingForm = ({
   preselectedDate, 
   preselectedTime 
 }: OnSiteBookingFormProps) => {
-  const [serviceType, setServiceType] = useState("");
   const [serviceDetails, setServiceDetails] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -73,7 +72,7 @@ const OnSiteBookingForm = ({
         booking_date: date,
         booking_time: time,
         service_provider_id: providerId,
-        notes: `${serviceType}: ${serviceDetails}. Address: ${address}, ${city}. Urgency: ${urgency}`,
+        notes: `Service Details: ${serviceDetails}. Address: ${address}, ${city}. Urgency: ${urgency}`,
         duration_hours: 2,
       });
 
@@ -137,28 +136,6 @@ const OnSiteBookingForm = ({
               <p className="text-sm text-gray-600">
                 Appointment: {new Date(date).toLocaleDateString()} at {time}
               </p>
-            </div>
-
-            {/* Service Type */}
-            <div className="space-y-2">
-              <Label htmlFor="service-type">Service Type</Label>
-              <Select value={serviceType} onValueChange={setServiceType} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a service" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="plumbing">Plumbing</SelectItem>
-                  <SelectItem value="electrical">Electrical Work</SelectItem>
-                  <SelectItem value="carpentry">Carpentry</SelectItem>
-                  <SelectItem value="cleaning">House Cleaning</SelectItem>
-                  <SelectItem value="painting">Painting</SelectItem>
-                  <SelectItem value="gardening">Gardening & Landscaping</SelectItem>
-                  <SelectItem value="photography">Photography</SelectItem>
-                  <SelectItem value="catering">Catering</SelectItem>
-                  <SelectItem value="transportation">Moving & Transport</SelectItem>
-                  <SelectItem value="other">Other Services</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Service Details */}

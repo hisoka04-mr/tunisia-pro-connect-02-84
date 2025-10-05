@@ -101,37 +101,62 @@ export const UltraModernChatWindow = ({ conversation, onBack }: UltraModernChatW
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Ultra Clean Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/10 bg-background/95 backdrop-blur-sm">
+      {/* Enhanced Header with User Info */}
+      <div className="flex items-start gap-3 px-4 py-4 border-b border-border/10 bg-card/50 backdrop-blur-sm">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onBack} 
-          className="h-8 w-8 rounded-full hover:bg-muted/50"
+          className="h-9 w-9 rounded-full hover:bg-muted/50 shrink-0 mt-1"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         
-        <div className="flex items-center gap-3 flex-1">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={otherUser?.profile_photo_url || ""} />
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-              {otherUser?.first_name?.[0]}{otherUser?.last_name?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-semibold text-foreground truncate">
-              {otherUser?.first_name} {otherUser?.last_name}
-            </h2>
-            <p className="text-xs text-muted-foreground truncate">
-              {conversation.booking?.service_details}
-            </p>
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          {/* Profile Photo with Online Status */}
+          <div className="relative shrink-0">
+            <Avatar className="h-12 w-12 border-2 border-background">
+              <AvatarImage src={otherUser?.profile_photo_url || ""} />
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                {otherUser?.first_name?.[0]}{otherUser?.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            {/* Online Status Indicator */}
+            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full"></div>
           </div>
-        </div>
-
-        <div className="text-xs text-muted-foreground bg-primary/10 text-primary px-2 py-1 rounded-full">
-          Chat
+          
+          {/* User Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-base font-bold text-foreground">
+                {otherUser?.first_name} {otherUser?.last_name}
+              </h2>
+              <span className="text-xs text-muted-foreground">
+                • {conversation.last_message_date ? formatDistanceToNow(new Date(conversation.last_message_date), { addSuffix: true }) : ''}
+              </span>
+            </div>
+            
+            {/* Service/Booking Details */}
+            <p className="text-sm text-muted-foreground truncate mb-1.5">
+              {conversation.booking?.service_details || 'Service booking'}
+            </p>
+            
+            {/* Role Badge and Date */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground">
+                {conversation.user_is_service_provider ? 'Provider' : 'Client'}
+              </span>
+              {conversation.booking?.scheduled_date && (
+                <span className="inline-flex items-center text-xs text-muted-foreground">
+                  📅 {new Date(conversation.booking.scheduled_date).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit' 
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

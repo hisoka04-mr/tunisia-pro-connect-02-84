@@ -228,22 +228,53 @@ interface UltraModernMessageBubbleProps {
 }
 
 const UltraModernMessageBubble = ({ message, isOwn, showAvatar }: UltraModernMessageBubbleProps) => {
+  const senderName = message.sender?.first_name && message.sender?.last_name
+    ? `${message.sender.first_name} ${message.sender.last_name}`
+    : message.sender?.first_name || 'Unknown User';
+
   return (
     <div className={cn("flex gap-2", isOwn ? "flex-row-reverse" : "flex-row")}>
-      {!isOwn && showAvatar && (
-        <Avatar className="h-6 w-6 shrink-0">
+      {/* Profile Photo */}
+      {!isOwn && (
+        <div className="shrink-0">
+          {showAvatar ? (
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={message.sender?.profile_photo_url || ""} />
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                {message.sender?.first_name?.[0]}{message.sender?.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="w-8" />
+          )}
+        </div>
+      )}
+      
+      {isOwn && showAvatar && (
+        <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage src={message.sender?.profile_photo_url || ""} />
-          <AvatarFallback className="bg-muted text-xs">
-            {message.sender?.first_name?.[0]}
+          <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+            {message.sender?.first_name?.[0]}{message.sender?.last_name?.[0]}
           </AvatarFallback>
         </Avatar>
       )}
       
-      {!isOwn && !showAvatar && (
-        <div className="w-6" />
+      {isOwn && !showAvatar && (
+        <div className="w-8" />
       )}
       
-      <div className={cn("flex flex-col max-w-[80%]", isOwn ? "items-end" : "items-start")}>
+      <div className={cn("flex flex-col max-w-[70%]", isOwn ? "items-end" : "items-start")}>
+        {/* Username above message */}
+        {showAvatar && (
+          <span className={cn(
+            "text-xs font-medium mb-1 px-1",
+            isOwn ? "text-primary" : "text-foreground"
+          )}>
+            {isOwn ? 'You' : senderName}
+          </span>
+        )}
+        
+        {/* Message Bubble */}
         <div
           className={cn(
             "px-3 py-2 rounded-2xl text-sm",
@@ -257,6 +288,7 @@ const UltraModernMessageBubble = ({ message, isOwn, showAvatar }: UltraModernMes
           </p>
         </div>
         
+        {/* Timestamp and Read Status */}
         <div className={cn("flex items-center gap-1 mt-1 px-1", isOwn ? "flex-row-reverse" : "flex-row")}>
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
